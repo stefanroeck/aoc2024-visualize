@@ -8,6 +8,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -15,6 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import util.FileUtil
 import util.InputUtils
 import util.MapOfThings.Point
@@ -22,11 +31,12 @@ import util.Maze
 import util.MazeElement
 import util.MazeEvent
 import util.MazeEventSink
+import kotlin.random.Random
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App(maze: Maze, windowSize: DpSize): MazeEventSink {
+fun App(maze: Maze, windowSize: DpSize, currentPosition: Point, visitedPoints: Set<Point>): MazeEventSink {
     val eventSink: MazeEventSink = object : MazeEventSink {
         override fun onEvent(event: MazeEvent) {
             TODO("Not yet implemented")
@@ -36,12 +46,14 @@ fun App(maze: Maze, windowSize: DpSize): MazeEventSink {
     val mazeColumns = maze.map.width
     val mazeRows = maze.map.height
 
+
     println("rendering a $mazeColumns x $mazeRows maze on window $windowSize")
     val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
     val emptyColor = Color.LightGray
-    val visitedColor = Color.Red
+    val currentPositionColor = Color.Red
+    val visitedColor = Color(0xFFFFB500)
     val wallColor = Color.DarkGray
-    val startEndColor = Color(0xFFFFB500)
+    val startEndColor = Color.Magenta
 
     MaterialTheme {
         FlowRow(
@@ -53,17 +65,20 @@ fun App(maze: Maze, windowSize: DpSize): MazeEventSink {
                 (0..<mazeRows).forEach { row ->
                     val point = Point(col, row)
                     val mazeElement = maze.map.thingAt(point)
+                    val backgroundColor = when (point) {
+                        currentPosition -> currentPositionColor
+                        in visitedPoints -> visitedColor
+                        else -> when (mazeElement) {
+                            MazeElement.Wall -> wallColor
+                            MazeElement.Start -> startEndColor
+                            MazeElement.End -> startEndColor
+                            else -> emptyColor
+                        }
+                    }
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .background(
-                                when (mazeElement) {
-                                    MazeElement.Wall -> wallColor
-                                    MazeElement.Start -> startEndColor
-                                    MazeElement.End -> startEndColor
-                                    else -> emptyColor
-                                }
-                            )
+                            .background(backgroundColor)
                             .height(boxSize)
                             .width(boxSize)
                     )
@@ -82,8 +97,35 @@ fun main() = application {
         height = 1200.dp,
     )
 
+    var currentPosition by remember { mutableStateOf(Point(4, 14)) }
+
+    CoroutineScope(context = Dispatchers.Main).launch {
+        ticker(3000L) {
+            currentPosition = Point(Random.nextInt(maze.map.width), Random.nextInt(maze.map.height))
+            println("Updating currentPosition $currentPosition")
+        }
+    }
+
     Window(onCloseRequest = ::exitApplication, state = windowState, title = "Maze Explorer") {
-        val mazeEventSink = App(maze = maze, windowSize = windowState.size)
+        val mazeEventSink =
+            App(
+                maze = maze,
+                windowSize = windowState.size,
+                currentPosition,
+                setOf()
+            )
         maze.eventSinks.add(mazeEventSink)
+    }
+}
+
+fun CoroutineScope.ticker(
+    tickInMillis: Long,
+    onTick: () -> Unit
+) {
+    this.launch(Dispatchers.Default) {
+        while (true) {
+            withContext(Dispatchers.Main) { onTick() }
+            delay(tickInMillis)
+        }
     }
 }
