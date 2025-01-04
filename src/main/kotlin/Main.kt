@@ -19,11 +19,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
+import day16.ReindeerMaze
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import util.FileUtil
 import util.InputUtils
 import util.MapOfThings.Point
@@ -31,23 +30,15 @@ import util.Maze
 import util.MazeElement
 import util.MazeEvent
 import util.MazeEventSink
-import kotlin.random.Random
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
-fun App(maze: Maze, windowSize: DpSize, currentPosition: Point, visitedPoints: Set<Point>): MazeEventSink {
-    val eventSink: MazeEventSink = object : MazeEventSink {
-        override fun onEvent(event: MazeEvent) {
-            TODO("Not yet implemented")
-        }
-    }
+fun App(maze: Maze, windowSize: DpSize, currentPosition: Point, visitedPoints: Set<Point>) {
     val boxSpacing = 1.dp
     val mazeColumns = maze.map.width
     val mazeRows = maze.map.height
 
-
-    println("rendering a $mazeColumns x $mazeRows maze on window $windowSize")
     val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
     val emptyColor = Color.LightGray
     val currentPositionColor = Color.Red
@@ -86,46 +77,48 @@ fun App(maze: Maze, windowSize: DpSize, currentPosition: Point, visitedPoints: S
             }
         }
     }
-
-    return eventSink
 }
 
 fun main() = application {
-    val maze = Maze(InputUtils.parseLines(FileUtil.readFile("/maze.txt")))
+    val reindeerMaze = ReindeerMaze(InputUtils.parseLines(FileUtil.readFile("/maze.txt")))
+    val maze = reindeerMaze.maze
+    var currentPosition by remember { mutableStateOf(maze.startPosition) }
+    var visitedPoints by remember { mutableStateOf(emptySet<Point>()) }
+
+    val mainScope = CoroutineScope(context = Dispatchers.Main)
+
+    val eventSink: MazeEventSink = object : MazeEventSink {
+        override fun onEvent(event: MazeEvent) {
+            Thread.sleep(100)
+            mainScope.launch {
+                when (event) {
+                    MazeEvent.Abort -> {}
+                    MazeEvent.FoundSolution -> {}
+                    is MazeEvent.Movement -> {
+                        currentPosition = event.position
+                        visitedPoints = visitedPoints + currentPosition
+                    }
+                }
+            }
+        }
+    }
+    maze.eventSinks.add(eventSink)
+
     val windowState = rememberWindowState(
         width = 940.dp,
         height = 1200.dp,
     )
 
-    var currentPosition by remember { mutableStateOf(Point(4, 14)) }
-
-    CoroutineScope(context = Dispatchers.Main).launch {
-        ticker(3000L) {
-            currentPosition = Point(Random.nextInt(maze.map.width), Random.nextInt(maze.map.height))
-            println("Updating currentPosition $currentPosition")
-        }
+    CoroutineScope(context = Dispatchers.Default).launch {
+        reindeerMaze.shortestPathCost()
     }
 
     Window(onCloseRequest = ::exitApplication, state = windowState, title = "Maze Explorer") {
-        val mazeEventSink =
-            App(
-                maze = maze,
-                windowSize = windowState.size,
-                currentPosition,
-                setOf()
-            )
-        maze.eventSinks.add(mazeEventSink)
-    }
-}
-
-fun CoroutineScope.ticker(
-    tickInMillis: Long,
-    onTick: () -> Unit
-) {
-    this.launch(Dispatchers.Default) {
-        while (true) {
-            withContext(Dispatchers.Main) { onTick() }
-            delay(tickInMillis)
-        }
+        App(
+            maze = maze,
+            windowSize = windowState.size,
+            currentPosition,
+            visitedPoints
+        )
     }
 }
