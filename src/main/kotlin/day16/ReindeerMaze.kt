@@ -82,7 +82,7 @@ class ReindeerMaze(private val lines: List<String>) {
             listOf(maze.startPosition)
         )
 
-        return solvedPaths.minOf { it.costs }
+        return solvedPaths.minOfOrNull { it.costs } ?: 0
     }
 
     fun seatsOnShortestPaths(): Long {
@@ -117,6 +117,9 @@ class ReindeerMaze(private val lines: List<String>) {
         path: List<Point>
     ) {
         maze.onEvent(MazeEvent.Movement(position))
+        if (maze.events.doCancel) {
+            return
+        }
 
         if (position == maze.endPosition) {
             maze.onEvent(MazeEvent.FoundSolution, "with costs $costs")

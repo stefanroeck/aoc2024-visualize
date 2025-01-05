@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import util.DefaultMazeEventInvoker
 import util.FileUtil
 import util.InputUtils
-import util.MapOfThings.Point
 import util.Maze
 import util.MazeEvent
 import util.MazeEventInvoker
@@ -45,17 +44,14 @@ typealias EventHandler = (event: AppEvent) -> Unit
 fun App(
     maze: Maze?,
     windowSize: DpSize,
-    currentPosition: Point,
-    visitedPoints: Set<Point>,
     eventHandler: EventHandler
 ) {
     MaterialTheme {
         Scaffold(
             topBar = { ApplicationTopBarComposable(maze, eventHandler) }
         ) { _ ->
-            val map = maze?.map
-            if (map != null) {
-                MazeComposable(map, windowSize, currentPosition, visitedPoints)
+            if (maze != null) {
+                MazeComposable(maze.map, maze.startPosition, windowSize, maze.events)
             } else {
                 MazeSelectScreen(eventHandler)
             }
@@ -66,28 +62,9 @@ fun App(
 private fun loadMaze(filePath: String) = ReindeerMaze(InputUtils.parseLines(FileUtil.readFile(filePath)))
 
 fun main() = application {
-    var currentPosition by remember { mutableStateOf(Point(0, 0)) }
-    var visitedPoints by remember { mutableStateOf(emptySet<Point>()) }
     var reindeerMaze: ReindeerMaze? by remember { mutableStateOf(null) }
 
     var runningMazeJob: Job? = null
-
-    val eventSink: MazeEventSink = object : MazeEventSink {
-        override fun onEvent(event: MazeEvent) {
-            if (runningMazeJob?.isCancelled == true) {
-                throw IllegalStateException("Cancel maze traversal")
-            }
-
-            when (event) {
-                MazeEvent.Abort -> {}
-                MazeEvent.FoundSolution -> {}
-                is MazeEvent.Movement -> {
-                    currentPosition = event.position
-                    visitedPoints = visitedPoints + currentPosition
-                }
-            }
-        }
-    }
 
     class ScopedEventInvoker(
         private val delegate: MazeEventInvoker,
@@ -117,27 +94,21 @@ fun main() = application {
                     reindeerMaze = loadMaze(event.mazeResource).also {
                         it.maze.events.eventInvoker =
                             ScopedEventInvoker(DefaultMazeEventInvoker(), CoroutineScope(context = Dispatchers.Main))
-                        it.maze.events.register(eventSink)
-                        currentPosition = it.maze.startPosition
                     }
-                    visitedPoints = emptySet()
                 }
 
                 is AppEvent.OnStart -> {
                     if (runningMazeJob == null) {
                         runningMazeJob = CoroutineScope(context = Dispatchers.Default).launch {
-                            reindeerMaze?.let {
-                                currentPosition = it.maze.startPosition
-                                visitedPoints = emptySet()
-                                it.shortestPathCost()
-                            }
+                            reindeerMaze?.shortestPathCost()
                         }
                     }
                 }
 
                 AppEvent.OnStop -> {
-                    println("Try to cancel $runningMazeJob")
+                    println("Cancelling $runningMazeJob")
                     CoroutineScope(context = Dispatchers.Default).launch {
+                        reindeerMaze?.maze?.events?.doCancel = true
                         runningMazeJob?.cancelAndJoin()
                         runningMazeJob = null
                         reindeerMaze = null
@@ -153,8 +124,6 @@ fun main() = application {
         App(
             maze = reindeerMaze?.maze,
             windowSize = windowState.size,
-            currentPosition,
-            visitedPoints,
             eventHandler
         )
     }

@@ -3,6 +3,7 @@ package util
 class MazeEvents {
     private val eventSinks = mutableListOf<MazeEventSink>()
     var eventInvoker: MazeEventInvoker = DefaultMazeEventInvoker()
+    var doCancel: Boolean = false
 
     fun register(eventSink: MazeEventSink) {
         eventSinks.add(eventSink)
