@@ -20,11 +20,13 @@ interface MazeEventSink {
     fun onEvent(event: MazeEvent)
 }
 
+typealias MazeMap = MapOfThings<MazeElement>
+
 class Maze(private val lines: List<String>, val eventSinks: MutableList<MazeEventSink> = mutableListOf()) {
 
     private var currentPosition: Point? = null
 
-    val map: MapOfThings<MazeElement> by lazy {
+    val map: MazeMap by lazy {
         MapOfThings.parse(lines) { c ->
             when (c) {
                 '#' -> Wall

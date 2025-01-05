@@ -1,26 +1,26 @@
 package day16
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Button
+import androidx.compose.material.ExtendedFloatingActionButton
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.NotStarted
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Window
@@ -35,7 +35,6 @@ import util.FileUtil
 import util.InputUtils
 import util.MapOfThings.Point
 import util.Maze
-import util.MazeElement
 import util.MazeEvent
 import util.MazeEventSink
 
@@ -48,7 +47,6 @@ sealed interface AppEvent {
 
 typealias EventHandler = (event: AppEvent) -> Unit
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 @Preview
 fun App(
@@ -60,10 +58,6 @@ fun App(
 ) {
     val selectedMaze = remember { mutableStateOf(buttonOptions[0]) }
 
-    LaunchedEffect(selectedMaze) {
-        eventHandler.invoke(AppEvent.OnSelectMaze(selectedMaze.value.resourceLocationOnClasspath))
-    }
-
     MaterialTheme {
         Scaffold(
             topBar = {
@@ -71,62 +65,45 @@ fun App(
                     title = {
                         Text("Select maze to solve")
                     }, actions = {
-                        MazeSelectorButton(selectedOption = selectedMaze.value) { new ->
-                            selectedMaze.value = new
-                            eventHandler(AppEvent.OnSelectMaze(new.resourceLocationOnClasspath))
-                        }
-                        Button(onClick = { eventHandler(AppEvent.OnStart) }) {
-                            Text("Start")
-                        }
-                        Button(onClick = { eventHandler(AppEvent.OnStop) }) {
-                            Text("Stop")
+                        maze?.let {
+                            Button(
+                                onClick = { eventHandler(AppEvent.OnStart) },
+                            ) {
+                                Text("Start")
+                            }
+                            Button(
+                                onClick = { eventHandler(AppEvent.OnStop) },
+                            ) {
+                                Text("Stop")
+                            }
                         }
                     }
                 )
             },
         ) { _ ->
-            maze?.let {
-                val boxSpacing = 1.dp
-                val mazeColumns = maze.map.width
-                val mazeRows = maze.map.height
-
-                val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
-                val emptyColor = Color.LightGray
-                val currentPositionColor = Color.Red
-                val visitedColor = Color(0xFFFFB500)
-                val wallColor = Color.DarkGray
-                val startEndColor = Color.Magenta
-
-                FlowRow(
-                    maxItemsInEachRow = mazeColumns,
-                    horizontalArrangement = Arrangement.spacedBy(boxSpacing),
-                    verticalArrangement = Arrangement.spacedBy(boxSpacing)
-                ) {
-                    (0..<mazeColumns).forEach { col ->
-                        (0..<mazeRows).forEach { row ->
-                            val point = Point(col, row)
-                            val mazeElement = maze.map.thingAt(point)
-                            val backgroundColor = when (point) {
-                                currentPosition -> currentPositionColor
-                                in visitedPoints -> visitedColor
-                                else -> when (mazeElement) {
-                                    MazeElement.Wall -> wallColor
-                                    MazeElement.Start -> startEndColor
-                                    MazeElement.End -> startEndColor
-                                    else -> emptyColor
-                                }
-                            }
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .background(backgroundColor)
-                                    .height(boxSize)
-                                    .width(boxSize)
-                            )
+            val map = maze?.map
+            if (map != null) {
+                MazeComposable(map, windowSize, currentPosition, visitedPoints)
+            } else {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(
+                            24.dp,
+                        ), horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        MazeSelectorButton(selectedOption = selectedMaze.value) { new ->
+                            selectedMaze.value = new
                         }
+
+                        ExtendedFloatingActionButton(
+                            onClick = {
+                                eventHandler(AppEvent.OnSelectMaze(selectedMaze.value.resourceLocationOnClasspath))
+                            },
+                            icon = { Icon(Icons.Outlined.NotStarted, "Select maze") },
+                            text = { Text("Select maze") }
+                        )
                     }
                 }
-
             }
         }
     }
@@ -194,6 +171,7 @@ fun main() = application {
                     CoroutineScope(context = Dispatchers.Default).launch {
                         runningMazeJob?.cancelAndJoin()
                         runningMazeJob = null
+                        reindeerMaze = null
                     }
                 }
 

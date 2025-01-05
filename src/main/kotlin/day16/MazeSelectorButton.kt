@@ -10,8 +10,9 @@ data class ButtonOption(val caption: String, val resourceLocationOnClasspath: St
 
 val buttonOptions =
     listOf(
-        ButtonOption("Sample 2", "/day16/sampleMaze.txt"),
-        ButtonOption("Part 1", "/day16/part1Maze.txt")
+        ButtonOption("Small 1", "/day16/sampleMaze1.txt"),
+        ButtonOption("Small 2", "/day16/sampleMaze2.txt"),
+        ButtonOption("Large 1", "/day16/part1Maze.txt")
     )
 
 @Composable
