@@ -1,4 +1,4 @@
-package day16
+package day16.composables
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import day16.AppEvent
+import day16.EventHandler
 
 @Composable
 fun MazeSelectScreen(

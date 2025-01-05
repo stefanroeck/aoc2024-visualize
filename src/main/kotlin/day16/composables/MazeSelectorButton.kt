@@ -1,4 +1,4 @@
-package day16
+package day16.composables
 
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
