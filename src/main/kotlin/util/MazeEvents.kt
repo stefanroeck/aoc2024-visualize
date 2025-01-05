@@ -23,7 +23,8 @@ class MazeEvents {
 sealed interface MazeEvent {
     data class Movement(val position: Point, val costs: Long) : MazeEvent
     data class FoundSolution(val path: List<Point>, val costs: Long) : MazeEvent
-    data object Abort : MazeEvent
+    data object AbandonPath : MazeEvent
+    data object Finish : MazeEvent
 }
 
 interface MazeEventSink {

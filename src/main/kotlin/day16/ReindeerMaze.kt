@@ -82,6 +82,8 @@ class ReindeerMaze(private val lines: List<String>) {
             listOf(maze.startPosition)
         )
 
+        maze.onEvent(MazeEvent.Finish)
+
         return solvedPaths.minOfOrNull { it.costs } ?: 0
     }
 
@@ -122,18 +124,18 @@ class ReindeerMaze(private val lines: List<String>) {
         }
 
         if (position == maze.endPosition) {
-            maze.onEvent(MazeEvent.FoundSolution(path, costs), "with costs $costs")
+            maze.onEvent(MazeEvent.FoundSolution(path, costs))
             solvedPathsCosts.add(PathThroughMaze(path, costs))
             return
         }
 
         if (solvedPathsCosts.any { costs > it.costs }) {
-            maze.onEvent(MazeEvent.Abort)
+            maze.onEvent(MazeEvent.AbandonPath)
             return // already found a cheaper way
         }
 
         if (pathOptimizationStrategy.abortTraversal(PointWithDirection(position, direction), costs)) {
-            maze.onEvent(MazeEvent.Abort)
+            maze.onEvent(MazeEvent.AbandonPath)
             return
         }
 
@@ -143,7 +145,7 @@ class ReindeerMaze(private val lines: List<String>) {
             .filter { maze.map.thingAt(it.second) != MazeElement.Wall } // don't run into walls
 
         if (possibleDirections.isEmpty()) {
-            maze.onEvent(MazeEvent.Abort)
+            maze.onEvent(MazeEvent.AbandonPath)
             return // dead end
         }
 
