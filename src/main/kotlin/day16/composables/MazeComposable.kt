@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -53,13 +54,15 @@ fun MazeComposable(
                         else -> emptyColor
                     }
                 }
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .background(backgroundColor)
-                        .height(boxSize)
-                        .width(boxSize)
-                )
+                key(point) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .background(backgroundColor)
+                            .height(boxSize)
+                            .width(boxSize)
+                    )
+                }
             }
         }
     }

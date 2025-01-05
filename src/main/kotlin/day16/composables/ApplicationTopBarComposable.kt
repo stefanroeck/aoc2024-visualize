@@ -15,7 +15,7 @@ fun ApplicationTopBarComposable(
 ) {
     TopAppBar(
         title = {
-            Text("Select maze to solve")
+            Text("Hit 'Start' to explore the maze")
         }, actions = {
             maze?.let {
                 Button(
