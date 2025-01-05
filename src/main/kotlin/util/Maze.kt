@@ -10,19 +10,9 @@ enum class MazeElement {
     Wall, Start, End, Empty
 }
 
-sealed interface MazeEvent {
-    data class Movement(val position: Point) : MazeEvent
-    data object FoundSolution : MazeEvent
-    data object Abort : MazeEvent
-}
-
-interface MazeEventSink {
-    fun onEvent(event: MazeEvent)
-}
-
 typealias MazeMap = MapOfThings<MazeElement>
 
-class Maze(private val lines: List<String>, val eventSinks: MutableList<MazeEventSink> = mutableListOf()) {
+class Maze(private val lines: List<String>, val events: MazeEvents = MazeEvents()) {
 
     private var currentPosition: Point? = null
 
@@ -47,7 +37,8 @@ class Maze(private val lines: List<String>, val eventSinks: MutableList<MazeEven
     }
 
     fun onEvent(event: MazeEvent, context: String = "") {
-        eventSinks.forEach { it.onEvent(event) }
+        events.fire(event)
+
         when (event) {
             MazeEvent.Abort -> {}
             MazeEvent.FoundSolution -> println("Found solution at $currentPosition $context".trim())

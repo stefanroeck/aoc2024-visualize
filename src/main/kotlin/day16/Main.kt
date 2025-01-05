@@ -21,12 +21,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import util.DefaultMazeEventInvoker
 import util.FileUtil
 import util.InputUtils
 import util.MapOfThings.Point
 import util.Maze
 import util.MazeEvent
+import util.MazeEventInvoker
 import util.MazeEventSink
+import java.time.Duration
 
 sealed interface AppEvent {
     data class OnSelectMaze(val mazeResource: String) : AppEvent
@@ -67,7 +70,6 @@ fun main() = application {
     var visitedPoints by remember { mutableStateOf(emptySet<Point>()) }
     var reindeerMaze: ReindeerMaze? by remember { mutableStateOf(null) }
 
-    val mainScope = CoroutineScope(context = Dispatchers.Main)
     var runningMazeJob: Job? = null
 
     val eventSink: MazeEventSink = object : MazeEventSink {
@@ -76,18 +78,30 @@ fun main() = application {
                 throw IllegalStateException("Cancel maze traversal")
             }
 
-            Thread.sleep(50)
-            mainScope.launch {
-                when (event) {
-                    MazeEvent.Abort -> {}
-                    MazeEvent.FoundSolution -> {}
-                    is MazeEvent.Movement -> {
-                        currentPosition = event.position
-                        visitedPoints = visitedPoints + currentPosition
-                    }
+            when (event) {
+                MazeEvent.Abort -> {}
+                MazeEvent.FoundSolution -> {}
+                is MazeEvent.Movement -> {
+                    currentPosition = event.position
+                    visitedPoints = visitedPoints + currentPosition
                 }
             }
         }
+    }
+
+    class ScopedEventInvoker(
+        private val delegate: MazeEventInvoker,
+        private val scope: CoroutineScope,
+        private val delay: Duration = Duration.ofMillis(50)
+    ) :
+        MazeEventInvoker {
+        override fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>) {
+            Thread.sleep(delay)
+            scope.launch {
+                delegate.fire(event, eventSinks)
+            }
+        }
+
     }
 
 
@@ -100,9 +114,12 @@ fun main() = application {
         override fun invoke(event: AppEvent) {
             when (event) {
                 is AppEvent.OnSelectMaze -> {
-                    reindeerMaze = loadMaze(event.mazeResource)
-                    currentPosition = reindeerMaze!!.maze.startPosition
-                    reindeerMaze!!.maze.eventSinks.add(eventSink)
+                    reindeerMaze = loadMaze(event.mazeResource).also {
+                        it.maze.events.eventInvoker =
+                            ScopedEventInvoker(DefaultMazeEventInvoker(), CoroutineScope(context = Dispatchers.Main))
+                        it.maze.events.register(eventSink)
+                        currentPosition = it.maze.startPosition
+                    }
                     visitedPoints = emptySet()
                 }
 
