@@ -14,6 +14,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,9 +39,12 @@ import util.MazeElement
 import util.MazeEvent
 import util.MazeEventSink
 
-enum class AppEvent {
-    OnStart, OnStop
+sealed interface AppEvent {
+    data class OnSelectMaze(val mazeResource: String) : AppEvent
+    data object OnStart : AppEvent
+    data object OnStop : AppEvent
 }
+
 
 typealias EventHandler = (event: AppEvent) -> Unit
 
@@ -48,31 +52,29 @@ typealias EventHandler = (event: AppEvent) -> Unit
 @Composable
 @Preview
 fun App(
-    maze: Maze,
+    maze: Maze?,
     windowSize: DpSize,
     currentPosition: Point,
     visitedPoints: Set<Point>,
     eventHandler: EventHandler
 ) {
-    val boxSpacing = 1.dp
-    val mazeColumns = maze.map.width
-    val mazeRows = maze.map.height
+    val selectedMaze = remember { mutableStateOf(buttonOptions[0]) }
 
-    val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
-    val emptyColor = Color.LightGray
-    val currentPositionColor = Color.Red
-    val visitedColor = Color(0xFFFFB500)
-    val wallColor = Color.DarkGray
-    val startEndColor = Color.Magenta
+    LaunchedEffect(selectedMaze) {
+        eventHandler.invoke(AppEvent.OnSelectMaze(selectedMaze.value.resourceLocationOnClasspath))
+    }
 
     MaterialTheme {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    modifier = Modifier.height(40.dp),
                     title = {
                         Text("Select maze to solve")
                     }, actions = {
+                        MazeSelectorButton(selectedOption = selectedMaze.value) { new ->
+                            selectedMaze.value = new
+                            eventHandler(AppEvent.OnSelectMaze(new.resourceLocationOnClasspath))
+                        }
                         Button(onClick = { eventHandler(AppEvent.OnStart) }) {
                             Text("Start")
                         }
@@ -83,44 +85,59 @@ fun App(
                 )
             },
         ) { _ ->
-            FlowRow(
-                maxItemsInEachRow = mazeColumns,
-                horizontalArrangement = Arrangement.spacedBy(boxSpacing),
-                verticalArrangement = Arrangement.spacedBy(boxSpacing)
-            ) {
-                (0..<mazeColumns).forEach { col ->
-                    (0..<mazeRows).forEach { row ->
-                        val point = Point(col, row)
-                        val mazeElement = maze.map.thingAt(point)
-                        val backgroundColor = when (point) {
-                            currentPosition -> currentPositionColor
-                            in visitedPoints -> visitedColor
-                            else -> when (mazeElement) {
-                                MazeElement.Wall -> wallColor
-                                MazeElement.Start -> startEndColor
-                                MazeElement.End -> startEndColor
-                                else -> emptyColor
+            maze?.let {
+                val boxSpacing = 1.dp
+                val mazeColumns = maze.map.width
+                val mazeRows = maze.map.height
+
+                val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
+                val emptyColor = Color.LightGray
+                val currentPositionColor = Color.Red
+                val visitedColor = Color(0xFFFFB500)
+                val wallColor = Color.DarkGray
+                val startEndColor = Color.Magenta
+
+                FlowRow(
+                    maxItemsInEachRow = mazeColumns,
+                    horizontalArrangement = Arrangement.spacedBy(boxSpacing),
+                    verticalArrangement = Arrangement.spacedBy(boxSpacing)
+                ) {
+                    (0..<mazeColumns).forEach { col ->
+                        (0..<mazeRows).forEach { row ->
+                            val point = Point(col, row)
+                            val mazeElement = maze.map.thingAt(point)
+                            val backgroundColor = when (point) {
+                                currentPosition -> currentPositionColor
+                                in visitedPoints -> visitedColor
+                                else -> when (mazeElement) {
+                                    MazeElement.Wall -> wallColor
+                                    MazeElement.Start -> startEndColor
+                                    MazeElement.End -> startEndColor
+                                    else -> emptyColor
+                                }
                             }
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .background(backgroundColor)
+                                    .height(boxSize)
+                                    .width(boxSize)
+                            )
                         }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .background(backgroundColor)
-                                .height(boxSize)
-                                .width(boxSize)
-                        )
                     }
                 }
+
             }
         }
     }
 }
 
+private fun loadMaze(filePath: String) = ReindeerMaze(InputUtils.parseLines(FileUtil.readFile(filePath)))
+
 fun main() = application {
-    val reindeerMaze = ReindeerMaze(InputUtils.parseLines(FileUtil.readFile("/maze.txt")))
-    val maze = reindeerMaze.maze
-    var currentPosition by remember { mutableStateOf(maze.startPosition) }
+    var currentPosition by remember { mutableStateOf(Point(0, 0)) }
     var visitedPoints by remember { mutableStateOf(emptySet<Point>()) }
+    var reindeerMaze: ReindeerMaze? by remember { mutableStateOf(null) }
 
     val mainScope = CoroutineScope(context = Dispatchers.Main)
     var runningMazeJob: Job? = null
@@ -144,7 +161,6 @@ fun main() = application {
             }
         }
     }
-    maze.eventSinks.add(eventSink)
 
     val windowState = rememberWindowState(
         width = 940.dp,
@@ -154,12 +170,21 @@ fun main() = application {
     val eventHandler = object : EventHandler {
         override fun invoke(event: AppEvent) {
             when (event) {
-                AppEvent.OnStart -> {
+                is AppEvent.OnSelectMaze -> {
+                    reindeerMaze = loadMaze(event.mazeResource)
+                    currentPosition = reindeerMaze!!.maze.startPosition
+                    reindeerMaze!!.maze.eventSinks.add(eventSink)
+                    visitedPoints = emptySet()
+                }
+
+                is AppEvent.OnStart -> {
                     if (runningMazeJob == null) {
                         runningMazeJob = CoroutineScope(context = Dispatchers.Default).launch {
-                            currentPosition = maze.startPosition
-                            visitedPoints = emptySet()
-                            reindeerMaze.shortestPathCost()
+                            reindeerMaze?.let {
+                                currentPosition = it.maze.startPosition
+                                visitedPoints = emptySet()
+                                it.shortestPathCost()
+                            }
                         }
                     }
                 }
@@ -171,6 +196,7 @@ fun main() = application {
                         runningMazeJob = null
                     }
                 }
+
             }
         }
 
@@ -178,7 +204,7 @@ fun main() = application {
 
     Window(onCloseRequest = ::exitApplication, state = windowState, title = "Maze Explorer") {
         App(
-            maze = maze,
+            maze = reindeerMaze?.maze,
             windowSize = windowState.size,
             currentPosition,
             visitedPoints,
