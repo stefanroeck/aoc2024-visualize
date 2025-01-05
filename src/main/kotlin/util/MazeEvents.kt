@@ -1,5 +1,7 @@
 package util
 
+import util.MapOfThings.Point
+
 class MazeEvents {
     private val eventSinks = mutableListOf<MazeEventSink>()
     var eventInvoker: MazeEventInvoker = DefaultMazeEventInvoker()
@@ -19,8 +21,8 @@ class MazeEvents {
 }
 
 sealed interface MazeEvent {
-    data class Movement(val position: MapOfThings.Point) : MazeEvent
-    data object FoundSolution : MazeEvent
+    data class Movement(val position: Point, val costs: Long) : MazeEvent
+    data class FoundSolution(val path: List<Point>, val costs: Long) : MazeEvent
     data object Abort : MazeEvent
 }
 

@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -48,13 +47,8 @@ fun MazeComposable(
         }
     }
 
-    LaunchedEffect("maze") {
-        println("register event")
+    DisposableEffect(true) {
         events.register(eventSink)
-    }
-
-    DisposableEffect("maze") {
-        println("unregister event")
         onDispose {
             events.unregister(eventSink)
         }

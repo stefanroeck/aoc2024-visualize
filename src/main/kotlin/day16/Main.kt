@@ -25,10 +25,6 @@ import util.DefaultMazeEventInvoker
 import util.FileUtil
 import util.InputUtils
 import util.Maze
-import util.MazeEvent
-import util.MazeEventInvoker
-import util.MazeEventSink
-import java.time.Duration
 
 sealed interface AppEvent {
     data class OnSelectMaze(val mazeResource: String) : AppEvent
@@ -66,22 +62,6 @@ fun main() = application {
 
     var runningMazeJob: Job? = null
 
-    class ScopedEventInvoker(
-        private val delegate: MazeEventInvoker,
-        private val scope: CoroutineScope,
-        private val delay: Duration = Duration.ofMillis(50)
-    ) :
-        MazeEventInvoker {
-        override fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>) {
-            Thread.sleep(delay)
-            scope.launch {
-                delegate.fire(event, eventSinks)
-            }
-        }
-
-    }
-
-
     val windowState = rememberWindowState(
         width = 940.dp,
         height = 1200.dp,
@@ -114,10 +94,8 @@ fun main() = application {
                         reindeerMaze = null
                     }
                 }
-
             }
         }
-
     }
 
     Window(onCloseRequest = ::exitApplication, state = windowState, title = "Maze Explorer") {

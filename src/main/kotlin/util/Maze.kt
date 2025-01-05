@@ -41,7 +41,7 @@ class Maze(private val lines: List<String>, val events: MazeEvents = MazeEvents(
 
         when (event) {
             MazeEvent.Abort -> {}
-            MazeEvent.FoundSolution -> println("Found solution at $currentPosition $context".trim())
+            is MazeEvent.FoundSolution -> println("Found solution at $currentPosition $context".trim())
             is MazeEvent.Movement -> currentPosition = event.position
         }
     }
