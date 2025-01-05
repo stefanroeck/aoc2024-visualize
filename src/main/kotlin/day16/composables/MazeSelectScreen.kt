@@ -23,23 +23,31 @@ fun MazeSelectScreen(
     eventHandler: EventHandler
 ) {
     val selectedMaze = remember { mutableStateOf(buttonOptions[0]) }
+    val selectedSpeed = remember { mutableStateOf(speedButtonOptions[0]) }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
-            verticalArrangement = Arrangement.spacedBy(
-                24.dp,
-            ), horizontalAlignment = Alignment.CenterHorizontally
+            verticalArrangement = Arrangement.spacedBy(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MazeSelectorButton(selectedOption = selectedMaze.value) { new ->
                 selectedMaze.value = new
             }
+            SpeedSelectorButton(selectedOption = selectedSpeed.value) { new ->
+                selectedSpeed.value = new
+            }
 
             ExtendedFloatingActionButton(
                 onClick = {
-                    eventHandler(AppEvent.OnSelectMaze(selectedMaze.value.resourceLocationOnClasspath))
+                    eventHandler(
+                        AppEvent.OnSelectMaze(
+                            mazeResource = selectedMaze.value.resourceLocationOnClasspath,
+                            visualizationDelay = selectedSpeed.value.delay
+                        )
+                    )
                 },
-                icon = { Icon(Icons.Outlined.NotStarted, "Select maze") },
-                text = { Text("Select maze") }
+                icon = { Icon(Icons.Outlined.NotStarted, "Start") },
+                text = { Text("Start") }
             )
         }
     }

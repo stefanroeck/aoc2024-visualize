@@ -25,9 +25,10 @@ import util.DefaultMazeEventInvoker
 import util.FileUtil
 import util.InputUtils
 import util.Maze
+import java.time.Duration
 
 sealed interface AppEvent {
-    data class OnSelectMaze(val mazeResource: String) : AppEvent
+    data class OnSelectMaze(val mazeResource: String, val visualizationDelay: Long) : AppEvent
     data object OnStart : AppEvent
     data object OnStop : AppEvent
 }
@@ -77,6 +78,7 @@ fun main() = application {
                                 delegate = DefaultMazeEventInvoker(),
                                 scope = CoroutineScope(context = Dispatchers.Main),
                                 isCanceled = { it.maze.events.doCancel },
+                                delay = Duration.ofMillis(event.visualizationDelay)
                             )
                     }
                 }

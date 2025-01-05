@@ -10,35 +10,32 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 
-data class ButtonOption(val caption: String, val resourceLocationOnClasspath: String)
+data class SpeedButtonOption(val caption: String, val delay: Long)
 
-val buttonOptions =
+val speedButtonOptions =
     listOf(
-        ButtonOption("Small 1", "/day16/sampleMaze1.txt"),
-        ButtonOption("Small 2", "/day16/sampleMaze2.txt"),
-        ButtonOption("Large 1", "/day16/part1Maze.txt")
+        SpeedButtonOption("Fast", 50),
+        SpeedButtonOption("Faster", 20),
+        SpeedButtonOption("Fastest", 10)
     )
 
 @Composable
-fun MazeSelectorButton(selectedOption: ButtonOption, selectedOptionChange: (ButtonOption) -> Unit) {
-
+fun SpeedSelectorButton(selectedOption: SpeedButtonOption, selectedOptionChange: (SpeedButtonOption) -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("Select maze")
+        Text("Choose Speed")
         SingleChoiceSegmentedButtonRow {
-            buttonOptions.forEachIndexed { index, option ->
+            speedButtonOptions.forEachIndexed { index, option ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(
                         index = index,
-                        count = buttonOptions.size
+                        count = speedButtonOptions.size
                     ),
 
                     onClick = { selectedOptionChange(option) },
                     selected = option == selectedOption,
-                    label = {
-                        Text(option.caption)
-                    }
+                    label = { Text(option.caption) }
                 )
             }
         }
