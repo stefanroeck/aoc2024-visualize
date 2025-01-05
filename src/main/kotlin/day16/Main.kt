@@ -73,7 +73,11 @@ fun main() = application {
                 is AppEvent.OnSelectMaze -> {
                     reindeerMaze = loadMaze(event.mazeResource).also {
                         it.maze.events.eventInvoker =
-                            ScopedEventInvoker(DefaultMazeEventInvoker(), CoroutineScope(context = Dispatchers.Main))
+                            ScopedEventInvoker(
+                                delegate = DefaultMazeEventInvoker(),
+                                scope = CoroutineScope(context = Dispatchers.Main),
+                                isCanceled = { it.maze.events.doCancel },
+                            )
                     }
                 }
 
