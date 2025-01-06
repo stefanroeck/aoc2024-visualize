@@ -4,7 +4,7 @@ import util.MapOfThings.Point
 
 class MazeEvents {
     private val eventSinks = mutableListOf<MazeEventSink>()
-    var eventInvoker: MazeEventInvoker = DefaultMazeEventInvoker()
+    var eventInvoker: MazeEventBroker = FilteringMazeEventBroker()
     var doCancel: Boolean = false
 
     fun register(eventSink: MazeEventSink) {
@@ -32,15 +32,50 @@ interface MazeEventSink {
     fun onEvent(event: MazeEvent)
 }
 
-interface MazeEventInvoker {
+interface MazeEventBroker {
     fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>)
 }
 
-class DefaultMazeEventInvoker(private val suppressedEvents: List<Class<out MazeEvent>> = emptyList()) :
-    MazeEventInvoker {
-    override fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>) {
-        if (suppressedEvents.none { it == event.javaClass }) {
-            eventSinks.forEach { it.onEvent(event) }
+interface MazeEventFilter {
+    interface FilterChain {
+        fun doContinue(event: MazeEvent, eventSinks: List<MazeEventSink>)
+    }
+
+    fun filter(event: MazeEvent, eventSinks: List<MazeEventSink>, filterChain: FilterChain)
+}
+
+class FilteringMazeEventBroker(private val filters: List<MazeEventFilter> = emptyList()) :
+    MazeEventBroker {
+
+    fun buildFilterChain(
+        index: Int,
+        filters: List<MazeEventFilter>,
+        terminator: (MazeEvent, List<MazeEventSink>) -> Unit
+    ): MazeEventFilter.FilterChain {
+        val currentFilter = filters[index]
+        val filterChain = object : MazeEventFilter.FilterChain {
+            override fun doContinue(event: MazeEvent, eventSinks: List<MazeEventSink>) {
+                val nextIndex = index + 1
+                if (nextIndex in filters.indices) {
+                    currentFilter.filter(event, eventSinks, buildFilterChain(nextIndex, filters, terminator))
+                } else {
+                    terminator(event, eventSinks)
+                }
+            }
         }
+        return filterChain
+    }
+
+    override fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>) {
+        val terminator: (MazeEvent, List<MazeEventSink>) -> Unit = { ev, evSinks ->
+            evSinks.forEach { it.onEvent(ev) }
+        }
+
+        if (filters.isNotEmpty()) {
+            filters.first().filter(event, eventSinks, buildFilterChain(0, filters, terminator))
+        } else {
+            terminator(event, eventSinks)
+        }
+
     }
 }

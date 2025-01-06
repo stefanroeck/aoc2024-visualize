@@ -21,8 +21,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
-import util.DefaultMazeEventInvoker
 import util.FileUtil
+import util.FilteringMazeEventBroker
 import util.InputUtils
 import util.Maze
 import util.MazeEvent
@@ -87,13 +87,17 @@ fun main() = application {
                         } else {
                             Duration.ofMillis(0)
                         }
-                        it.maze.events.eventInvoker =
-                            ScopedEventInvoker(
-                                delegate = DefaultMazeEventInvoker(suppressedEvents = suppressedEvents),
-                                scope = CoroutineScope(context = Dispatchers.Main),
-                                isCanceled = { it.maze.events.doCancel },
-                                delay = delay
+
+                        val broker = FilteringMazeEventBroker(
+                            listOf(
+                                StopEventPropagationOnCancelEventFilter(isCanceled = { it.maze.events.doCancel }),
+                                SuppressingEventFilter(suppressedEvents),
+                                AnimatingEventFilter(animationDelay = delay),
+                                ScopedEventFilter(scope = CoroutineScope(context = Dispatchers.Main))
                             )
+                        )
+
+                        it.maze.events.eventInvoker = broker
                     }
                 }
 
