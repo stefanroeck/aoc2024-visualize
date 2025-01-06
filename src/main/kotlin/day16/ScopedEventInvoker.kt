@@ -16,7 +16,9 @@ class ScopedEventInvoker(
     MazeEventInvoker {
     override fun fire(event: MazeEvent, eventSinks: List<MazeEventSink>) {
         if (!isCanceled()) {
-            Thread.sleep(delay)
+            if (!delay.isZero) {
+                Thread.sleep(delay)
+            }
             scope.launch {
                 delegate.fire(event, eventSinks)
             }

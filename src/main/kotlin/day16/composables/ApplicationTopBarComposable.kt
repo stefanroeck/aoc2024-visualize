@@ -47,10 +47,13 @@ fun ApplicationTopBarComposable(
                         cheapestSolution =
                             if (cheapestSolution != null) min(cheapestSolution!!, event.costs) else event.costs
                     }
+                    
+                    is MazeEvent.Start -> {
+                        state = State.Running
+                    }
 
                     is MazeEvent.Movement -> {
                         currentCosts = event.costs
-                        state = State.Running
                     }
 
                     is MazeEvent.Finish -> {

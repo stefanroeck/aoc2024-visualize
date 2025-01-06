@@ -71,6 +71,8 @@ class ReindeerMaze(private val lines: List<String>) {
     }
 
     fun shortestPathCost(): Long {
+        maze.onEvent(MazeEvent.Start)
+        
         val solvedPaths = mutableListOf<PathThroughMaze>()
 
         move(

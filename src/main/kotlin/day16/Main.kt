@@ -25,10 +25,14 @@ import util.DefaultMazeEventInvoker
 import util.FileUtil
 import util.InputUtils
 import util.Maze
+import util.MazeEvent
 import java.time.Duration
 
 sealed interface AppEvent {
-    data class OnSelectMaze(val mazeResource: String, val visualizationDelay: Long) : AppEvent
+    data class OnSelectMaze(val mazeResource: String, val options: VisualizationOptions) : AppEvent {
+        data class VisualizationOptions(val showMovements: Boolean, val visualizationDelay: Long)
+    }
+
     data object OnStart : AppEvent
     data object OnStop : AppEvent
 }
@@ -73,12 +77,22 @@ fun main() = application {
             when (event) {
                 is AppEvent.OnSelectMaze -> {
                     reindeerMaze = loadMaze(event.mazeResource).also {
+                        val suppressedEvents = if (!event.options.showMovements) {
+                            listOf(MazeEvent.Movement::class.java)
+                        } else {
+                            emptyList()
+                        }
+                        val delay = if (event.options.showMovements) {
+                            Duration.ofMillis(event.options.visualizationDelay)
+                        } else {
+                            Duration.ofMillis(0)
+                        }
                         it.maze.events.eventInvoker =
                             ScopedEventInvoker(
-                                delegate = DefaultMazeEventInvoker(),
+                                delegate = DefaultMazeEventInvoker(suppressedEvents = suppressedEvents),
                                 scope = CoroutineScope(context = Dispatchers.Main),
                                 isCanceled = { it.maze.events.doCancel },
-                                delay = Duration.ofMillis(event.visualizationDelay)
+                                delay = delay
                             )
                     }
                 }
