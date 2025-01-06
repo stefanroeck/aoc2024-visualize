@@ -78,21 +78,16 @@ fun main() = application {
                 is AppEvent.OnSelectMaze -> {
                     reindeerMaze = loadMaze(event.mazeResource).also {
                         val suppressedEvents = if (!event.options.showMovements) {
-                            listOf(MazeEvent.Movement::class.java)
+                            listOf(MazeEvent.Movement::class.java, MazeEvent.AbandonPath::class.java)
                         } else {
                             emptyList()
                         }
-                        val delay = if (event.options.showMovements) {
-                            Duration.ofMillis(event.options.visualizationDelay)
-                        } else {
-                            Duration.ofMillis(0)
-                        }
-
+                        
                         val broker = FilteringMazeEventBroker(
                             listOf(
                                 StopEventPropagationOnCancelEventFilter(isCanceled = { it.maze.events.doCancel }),
                                 SuppressingEventFilter(suppressedEvents),
-                                AnimatingEventFilter(animationDelay = delay),
+                                AnimatingEventFilter(animationDelay = Duration.ofMillis(event.options.visualizationDelay)),
                                 ScopedEventFilter(scope = CoroutineScope(context = Dispatchers.Main))
                             )
                         )

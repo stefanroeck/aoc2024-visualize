@@ -34,16 +34,7 @@ fun SpeedSelectorButton(
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Switch(
-                checked = selectedOption.showMovement,
-                onCheckedChange = {
-                    selectedOptionChange(SpeedSelectorOption(selectedOption.buttonOption, it))
-                },
-                modifier = Modifier.scale(0.67f)
-            )
-            Text("Show Movement")
-        }
+        Text("UI update speed")
         SingleChoiceSegmentedButtonRow {
             speedButtonOptions.forEachIndexed { index, option ->
                 key(option.delay) {
@@ -55,16 +46,30 @@ fun SpeedSelectorButton(
                             count = speedButtonOptions.size,
                         ),
 
-                        icon = { if (showMovement) SegmentedButtonDefaults.Icon(isSelected) },
-                        enabled = showMovement,
                         onClick = {
                             selectedOptionChange(SpeedSelectorOption(option, showMovement))
                         },
-                        selected = isSelected || !showMovement,
+                        selected = isSelected,
                         label = { Text(option.caption) }
                     )
                 }
             }
         }
     }
+
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Switch(
+                checked = selectedOption.showMovement,
+                onCheckedChange = {
+                    selectedOptionChange(SpeedSelectorOption(selectedOption.buttonOption, it))
+                },
+                modifier = Modifier.scale(0.67f)
+            )
+            Text("Show Movement")
+        }
+    }
+
 }
