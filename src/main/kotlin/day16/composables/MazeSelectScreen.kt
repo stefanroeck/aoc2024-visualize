@@ -13,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import day16.MazeRenderingOptions
 
 @Composable
 fun MazeSelectScreen(
@@ -55,3 +54,5 @@ fun MazeSelectScreen(
     }
 
 }
+
+data class MazeRenderingOptions(val mazeResource: String, val showMovements: Boolean, val visualizationDelay: Long)

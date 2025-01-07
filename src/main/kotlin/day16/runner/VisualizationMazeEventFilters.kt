@@ -1,4 +1,4 @@
-package day16
+package day16.runner
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

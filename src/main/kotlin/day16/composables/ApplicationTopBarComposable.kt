@@ -17,8 +17,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import day16.AppEvent
-import day16.EventHandler
 import util.Maze
 import util.MazeEvent
 import util.MazeEventSink
@@ -47,7 +45,7 @@ fun ApplicationTopBarComposable(
                         cheapestSolution =
                             if (cheapestSolution != null) min(cheapestSolution!!, event.costs) else event.costs
                     }
-                    
+
                     is MazeEvent.Start -> {
                         state = State.Running
                     }
