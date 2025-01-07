@@ -10,46 +10,44 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.NotStarted
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import day16.AppEvent
-import day16.AppEvent.OnSelectMaze.VisualizationOptions
-import day16.EventHandler
+import day16.MazeRenderingOptions
 
 @Composable
 fun MazeSelectScreen(
-    eventHandler: EventHandler
+    mazeRenderingOptions: MazeRenderingOptions?,
+    onChangeMazeRenderingOptions: (MazeRenderingOptions) -> Unit,
+    onStart: () -> Unit,
 ) {
-    val selectedMaze = remember { mutableStateOf(buttonOptions[0]) }
-    val selectedSpeedOption = remember { mutableStateOf(SpeedSelectorOption(speedButtonOptions[0], true)) }
+    val mazeOptionsOrDefault = mazeRenderingOptions ?: MazeRenderingOptions(
+        buttonOptions[0].resourceLocationOnClasspath,
+        true,
+        speedButtonOptions[0].delay,
+    )
+    val selectedMaze = buttonOptions.first { it.resourceLocationOnClasspath == mazeOptionsOrDefault.mazeResource }
+    val selectedSpeedOption = speedButtonOptions.first { it.delay == mazeOptionsOrDefault.visualizationDelay }
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            MazeSelectorButton(selectedOption = selectedMaze.value) { new ->
-                selectedMaze.value = new
+            MazeSelectorButton(selectedOption = selectedMaze) { new ->
+                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(mazeResource = new.resourceLocationOnClasspath))
             }
-            SpeedSelectorButton(selectedOption = selectedSpeedOption.value) { new ->
-                selectedSpeedOption.value = new
+
+            SpeedSelectorButton(selectedOption = selectedSpeedOption) { new ->
+                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(visualizationDelay = new.delay))
+            }
+
+            ShowMovementSwitch(selectedOption = mazeOptionsOrDefault.showMovements) { new ->
+                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(showMovements = new))
             }
 
             ExtendedFloatingActionButton(
-                onClick = {
-                    eventHandler(
-                        AppEvent.OnSelectMaze(
-                            mazeResource = selectedMaze.value.resourceLocationOnClasspath,
-                            options = VisualizationOptions(
-                                showMovements = selectedSpeedOption.value.showMovement,
-                                visualizationDelay = selectedSpeedOption.value.buttonOption.delay
-                            ),
-                        )
-                    )
-                },
+                onClick = { onStart() },
                 icon = { Icon(Icons.Outlined.NotStarted, "Start") },
                 text = { Text("Start") }
             )

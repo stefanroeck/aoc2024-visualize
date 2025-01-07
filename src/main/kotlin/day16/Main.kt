@@ -28,11 +28,12 @@ import util.Maze
 import util.MazeEvent
 import java.time.Duration
 
-sealed interface AppEvent {
-    data class OnSelectMaze(val mazeResource: String, val options: VisualizationOptions) : AppEvent {
-        data class VisualizationOptions(val showMovements: Boolean, val visualizationDelay: Long)
-    }
+data class VisualizationOptions(val showMovements: Boolean, val visualizationDelay: Long)
 
+data class MazeRenderingOptions(val mazeResource: String, val showMovements: Boolean, val visualizationDelay: Long)
+
+sealed interface AppEvent {
+    data class OnSelectMaze(val mazeResource: String, val options: VisualizationOptions) : AppEvent
     data object OnStart : AppEvent
     data object OnStop : AppEvent
 }
@@ -47,6 +48,8 @@ fun App(
     windowSize: DpSize,
     eventHandler: EventHandler
 ) {
+    val mazeRenderingOptions = remember { mutableStateOf<MazeRenderingOptions?>(null) }
+
     MaterialTheme {
         Scaffold(
             topBar = { ApplicationTopBarComposable(maze, eventHandler) }
@@ -54,7 +57,20 @@ fun App(
             if (maze != null) {
                 MazeComposable(maze.map, maze.startPosition, windowSize, maze.events)
             } else {
-                MazeSelectScreen(eventHandler)
+                MazeSelectScreen(
+                    mazeRenderingOptions = mazeRenderingOptions.value,
+                    onChangeMazeRenderingOptions = { new -> mazeRenderingOptions.value = new },
+                    onStart = {
+                        mazeRenderingOptions.value?.let {
+                            eventHandler.invoke(
+                                AppEvent.OnSelectMaze(
+                                    it.mazeResource,
+                                    VisualizationOptions(it.showMovements, it.visualizationDelay)
+                                )
+                            )
+                        }
+                    }
+                )
             }
         }
     }
@@ -82,7 +98,7 @@ fun main() = application {
                         } else {
                             emptyList()
                         }
-                        
+
                         val broker = FilteringMazeEventBroker(
                             listOf(
                                 StopEventPropagationOnCancelEventFilter(isCanceled = { it.maze.events.doCancel }),
