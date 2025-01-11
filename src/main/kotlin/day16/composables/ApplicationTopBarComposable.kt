@@ -20,11 +20,23 @@ import androidx.compose.ui.unit.em
 import util.Maze
 import util.MazeEvent
 import util.MazeEventSink
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 import kotlin.math.min
 
 private enum class State {
     None, Running, Finished
 }
+
+private fun formatLong(value: Long?): String? {
+    if (value == null) return null
+    val symbols = DecimalFormatSymbols(Locale.getDefault()).apply {
+        groupingSeparator = ' ' // Use a space as the thousands separator
+    }
+    return DecimalFormat("#,###", symbols).format(value)
+}
+
 
 @Composable
 fun ApplicationTopBarComposable(
@@ -32,6 +44,7 @@ fun ApplicationTopBarComposable(
     eventHandler: EventHandler
 ) {
     var currentCosts by remember { mutableStateOf(0L) }
+    var totalSteps by remember { mutableStateOf(0L) }
     var foundSolutions by remember { mutableStateOf(0L) }
     var cheapestSolution by remember { mutableStateOf<Long?>(null) }
     var state by remember { mutableStateOf(State.None) }
@@ -44,6 +57,7 @@ fun ApplicationTopBarComposable(
                         foundSolutions += 1L
                         cheapestSolution =
                             if (cheapestSolution != null) min(cheapestSolution!!, event.costs) else event.costs
+                        totalSteps = event.steps
                     }
 
                     is MazeEvent.Start -> {
@@ -52,10 +66,12 @@ fun ApplicationTopBarComposable(
 
                     is MazeEvent.Movement -> {
                         currentCosts = event.costs
+                        totalSteps = event.steps
                     }
 
                     is MazeEvent.Finish -> {
                         state = State.Finished
+                        totalSteps = event.steps
                     }
 
                     else -> {}
@@ -69,6 +85,7 @@ fun ApplicationTopBarComposable(
         onDispose {
             currentCosts = 0L
             foundSolutions = 0L
+            totalSteps = 0L
             cheapestSolution = null
             maze?.events?.unregister(eventSink)
         }
@@ -76,8 +93,11 @@ fun ApplicationTopBarComposable(
 
     val text = when (state) {
         State.None -> "Hit 'Start' to explore the maze"
-        State.Running -> "Found solutions: $foundSolutions, Cheapest solution: ${cheapestSolution ?: "n/a"}, Current costs: $currentCosts"
-        State.Finished -> "Finished. Found solutions: $foundSolutions, Cheapest solution: ${cheapestSolution ?: "n/a"}"
+        State.Running -> "Found solutions: $foundSolutions, Cheapest solution: ${formatLong(cheapestSolution) ?: "n/a"}, " +
+                "Current costs: ${formatLong(currentCosts)}, Steps: ${formatLong(totalSteps)}"
+
+        State.Finished -> "Finished. Found solutions: $foundSolutions, Cheapest solution: ${formatLong(cheapestSolution) ?: "n/a"}, " +
+                "Steps: ${formatLong(totalSteps)}"
     }
 
     TopAppBar(

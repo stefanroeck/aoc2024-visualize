@@ -5,6 +5,7 @@ import util.MapOfThings.Point
 import util.Maze
 import util.MazeElement
 import util.MazeEvent
+import java.util.concurrent.atomic.AtomicInteger
 
 private data class PointWithDirection(val point: Point, val direction: Direction)
 
@@ -72,19 +73,21 @@ class ReindeerMaze(private val lines: List<String>) {
 
     fun shortestPathCost(): Long {
         maze.onEvent(MazeEvent.Start)
-        
+
         val solvedPaths = mutableListOf<PathThroughMaze>()
+        val steps = AtomicInteger(0)
 
         move(
             maze.startPosition,
             Direction.Right,
             CheckVisitedPointsForLowerCosts(),
             0,
+            steps,
             solvedPaths,
             listOf(maze.startPosition)
         )
 
-        maze.onEvent(MazeEvent.Finish)
+        maze.onEvent(MazeEvent.Finish(steps = steps.toLong()))
 
         return solvedPaths.minOfOrNull { it.costs } ?: 0
     }
@@ -103,8 +106,17 @@ class ReindeerMaze(private val lines: List<String>) {
             )
         )
         val solvedPaths = mutableListOf<PathThroughMaze>()
+        val steps = AtomicInteger(0)
 
-        move(maze.startPosition, Direction.Right, pathOptimizationStrategy, 0, solvedPaths, listOf(maze.startPosition))
+        move(
+            maze.startPosition,
+            Direction.Right,
+            pathOptimizationStrategy,
+            0,
+            steps,
+            solvedPaths,
+            listOf(maze.startPosition)
+        )
 
         val distinctPoints = solvedPaths
             .flatMap { it.path }
@@ -117,16 +129,19 @@ class ReindeerMaze(private val lines: List<String>) {
         direction: Direction,
         pathOptimizationStrategy: PathOptimizationStrategy,
         costs: Long,
+        steps: AtomicInteger,
         solvedPathsCosts: MutableList<PathThroughMaze>,
         path: List<Point>
     ) {
-        maze.onEvent(MazeEvent.Movement(position, costs))
+        maze.onEvent(MazeEvent.Movement(position = position, costs = costs, steps = steps.toLong()))
+        steps.incrementAndGet()
+
         if (maze.events.doCancel) {
             return
         }
 
         if (position == maze.endPosition) {
-            maze.onEvent(MazeEvent.FoundSolution(path, costs))
+            maze.onEvent(MazeEvent.FoundSolution(path = path, costs = costs, steps = steps.toLong()))
             solvedPathsCosts.add(PathThroughMaze(path, costs))
             return
         }
@@ -153,7 +168,15 @@ class ReindeerMaze(private val lines: List<String>) {
 
         // traverse same direction first as way cheaper than turning
         val lowCostDirection = possibleDirections.firstOrNull { it.first == direction }?.let {
-            move(it.second, direction, pathOptimizationStrategy, costs + 1, solvedPathsCosts, path + it.second)
+            move(
+                it.second,
+                direction,
+                pathOptimizationStrategy,
+                costs + 1,
+                steps,
+                solvedPathsCosts,
+                path + it.second
+            )
             it
         }
 
@@ -165,6 +188,7 @@ class ReindeerMaze(private val lines: List<String>) {
                     it.first,
                     pathOptimizationStrategy,
                     costs + 1000 + 1,
+                    steps,
                     solvedPathsCosts,
                     path + it.second
                 )
