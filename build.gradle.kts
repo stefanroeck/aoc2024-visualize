@@ -31,6 +31,7 @@ dependencies {
     testImplementation(compose.uiTest)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(kotlin("test"))
+    testImplementation("org.assertj:assertj-core:3.27.0")
 }
 
 compose.desktop {
