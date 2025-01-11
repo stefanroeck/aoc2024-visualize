@@ -1,3 +1,4 @@
+import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
@@ -25,6 +26,11 @@ dependencies {
     implementation(compose.materialIconsExtended)
     implementation(compose.components.resources)
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.1")
+
+    @OptIn(ExperimentalComposeLibrary::class)
+    testImplementation(compose.uiTest)
+    testImplementation(compose.desktop.uiTestJUnit4)
+    testImplementation(kotlin("test"))
 }
 
 compose.desktop {
