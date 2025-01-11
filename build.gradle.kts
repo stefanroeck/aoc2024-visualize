@@ -16,6 +16,10 @@ repositories {
     google()
 }
 
+kotlin {
+    jvmToolchain(21)
+}
+
 dependencies {
     // Note, if you develop a library, you should use compose.desktop.common.
     // compose.desktop.currentOs should be used in launcher-sourceSet
