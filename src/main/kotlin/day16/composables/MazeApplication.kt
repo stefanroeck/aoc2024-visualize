@@ -15,7 +15,7 @@ fun MazeApplication(
     windowSize: DpSize,
     eventHandler: EventHandler
 ) {
-    val mazeRenderingOptions = remember { mutableStateOf<MazeRenderingOptions?>(null) }
+    val mazeRenderingOptions = remember { mutableStateOf(defaultMazeRenderingOptions) }
 
     MaterialTheme {
         Scaffold(
@@ -28,11 +28,11 @@ fun MazeApplication(
                     mazeRenderingOptions = mazeRenderingOptions.value,
                     onChangeMazeRenderingOptions = { new -> mazeRenderingOptions.value = new },
                     onStart = {
-                        mazeRenderingOptions.value?.let {
+                        mazeRenderingOptions.value.run {
                             eventHandler.invoke(
                                 AppEvent.OnSelectMaze(
-                                    it.mazeResource,
-                                    VisualizationOptions(it.showMovements, it.visualizationDelay)
+                                    mazeResource,
+                                    VisualizationOptions(showMovements, visualizationDelay)
                                 )
                             )
                         }

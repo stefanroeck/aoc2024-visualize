@@ -56,3 +56,6 @@ fun MazeSelectScreen(
 }
 
 data class MazeRenderingOptions(val mazeResource: String, val showMovements: Boolean, val visualizationDelay: Long)
+
+val defaultMazeRenderingOptions =
+    MazeRenderingOptions(buttonOptions[0].resourceLocationOnClasspath, true, speedButtonOptions[0].delay)

@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.times
 import util.MapOfThings.Point
 import util.MazeEvent
 import util.MazeEventSink
@@ -65,7 +66,7 @@ fun MazeComposable(
     val mazeColumns = map.width
     val mazeRows = map.height
 
-    val boxSize = windowSize.width / mazeColumns - (boxSpacing + boxSpacing)
+    val boxSize = (windowSize.width / mazeColumns) - 2 * boxSpacing
 
     FlowRow(
         maxItemsInEachRow = mazeColumns,
