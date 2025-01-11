@@ -20,13 +20,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import util.FileUtil
 import util.FilteringMazeEventBroker
 import util.InputUtils
 import util.MazeEvent
 import java.time.Duration
 
-private fun loadMaze(filePath: String) = ReindeerMaze(InputUtils.parseLines(FileUtil.readFile(filePath)))
+private suspend fun loadMaze(filePath: String) =
+    ReindeerMaze(InputUtils.parseLines(FileUtil.readComposeResource(filePath)))
 
 fun main() = application {
     var reindeerMaze: ReindeerMaze? by remember { mutableStateOf(null) }
@@ -36,7 +38,9 @@ fun main() = application {
         override fun invoke(event: AppEvent) {
             when (event) {
                 is AppEvent.OnSelectMaze -> {
-                    reindeerMaze = loadMaze(event.mazeResource).also {
+                    reindeerMaze = runBlocking {
+                        loadMaze(event.mazeResource)
+                    }.also {
                         val suppressedEvents = if (!event.options.showMovements) {
                             listOf(MazeEvent.Movement::class.java, MazeEvent.AbandonPath::class.java)
                         } else {
