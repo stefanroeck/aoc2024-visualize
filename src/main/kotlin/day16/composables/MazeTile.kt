@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.Dp
 import util.MazeElement
 
@@ -50,6 +51,7 @@ fun MazeTile(value: MazeElement?, stats: PointStats, boxSize: Dp, modifier: Modi
         modifier = modifier.then(
             Modifier
                 .background(backgroundColor)
+                .testTag("mazeTile")
                 .height(boxSize)
                 .width(boxSize)
         )

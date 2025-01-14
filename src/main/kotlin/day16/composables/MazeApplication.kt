@@ -3,27 +3,43 @@ package day16.composables
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.DpSize
+import day16.runner.MazeLoaderSpec
+import day16.runner.MazeRunnerSpec
+import day16.runner.rememberMazeLifecycle
 import util.Maze
 
 
 @Composable
 fun MazeApplication(
-    maze: Maze?,
     windowSize: DpSize,
-    eventHandler: EventHandler
 ) {
+    val lifeCycle by rememberMazeLifecycle()
+    val mazeHolder = remember { mutableStateOf<Maze?>(null) }
     val mazeRenderingOptions = remember { mutableStateOf(defaultMazeRenderingOptions) }
+
+    val maze = mazeHolder.value
 
     MaterialTheme {
         Scaffold(
             topBar = {
                 ApplicationTopBarComposable(
                     maze,
-                    onStart = { eventHandler.invoke(AppEvent.OnStart) },
-                    onStop = { eventHandler.invoke(AppEvent.OnStop) })
+                    onStart = {
+                        lifeCycle.run(
+                            MazeRunnerSpec(
+                                mazeRenderingOptions.value.showMovements,
+                                mazeRenderingOptions.value.visualizationDelay
+                            )
+                        )
+                    },
+                    onStop = {
+                        lifeCycle.stop()
+                        mazeHolder.value = null
+                    })
             }
         ) { _ ->
             if (maze != null) {
@@ -34,12 +50,7 @@ fun MazeApplication(
                     onChangeMazeRenderingOptions = { new -> mazeRenderingOptions.value = new },
                     onStart = {
                         mazeRenderingOptions.value.run {
-                            eventHandler.invoke(
-                                AppEvent.OnSelectMaze(
-                                    mazeResource,
-                                    VisualizationOptions(showMovements, visualizationDelay)
-                                )
-                            )
+                            mazeHolder.value = lifeCycle.load(MazeLoaderSpec(mazeResource))
                         }
                     }
                 )
