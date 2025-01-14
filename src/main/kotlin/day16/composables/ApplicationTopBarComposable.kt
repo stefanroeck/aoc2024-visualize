@@ -41,7 +41,8 @@ private fun formatLong(value: Long?): String? {
 @Composable
 fun ApplicationTopBarComposable(
     maze: Maze?,
-    eventHandler: EventHandler
+    onStart: () -> Unit,
+    onStop: () -> Unit,
 ) {
     var currentCosts by remember { mutableStateOf(0L) }
     var totalSteps by remember { mutableStateOf(0L) }
@@ -112,7 +113,7 @@ fun ApplicationTopBarComposable(
             maze?.let {
                 if (state == State.None) {
                     Button(
-                        onClick = { eventHandler(AppEvent.OnStart) },
+                        onClick = onStart,
                     ) {
                         Text("Start")
                     }
@@ -120,7 +121,7 @@ fun ApplicationTopBarComposable(
                 if (state == State.Running) {
                     Button(
                         onClick = {
-                            eventHandler(AppEvent.OnStop)
+                            onStop()
                             state = State.None
                         },
                     ) {
@@ -130,7 +131,7 @@ fun ApplicationTopBarComposable(
                 if (state in setOf(State.None, State.Finished)) {
                     Button(
                         onClick = {
-                            eventHandler(AppEvent.OnStop)
+                            onStop()
                             state = State.None
                         },
                     ) {

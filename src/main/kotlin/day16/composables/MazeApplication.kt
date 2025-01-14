@@ -19,7 +19,12 @@ fun MazeApplication(
 
     MaterialTheme {
         Scaffold(
-            topBar = { ApplicationTopBarComposable(maze, eventHandler) }
+            topBar = {
+                ApplicationTopBarComposable(
+                    maze,
+                    onStart = { eventHandler.invoke(AppEvent.OnStart) },
+                    onStop = { eventHandler.invoke(AppEvent.OnStop) })
+            }
         ) { _ ->
             if (maze != null) {
                 MazeComposable(maze.map, maze.startPosition, windowSize, maze.events)
