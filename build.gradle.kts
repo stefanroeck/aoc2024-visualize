@@ -2,9 +2,9 @@ import org.jetbrains.compose.ExperimentalComposeLibrary
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
-    kotlin("jvm")
-    id("org.jetbrains.compose")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.kotlin.plugin.compose)
 }
 
 group = "de.sroeck"
@@ -17,7 +17,7 @@ repositories {
 }
 
 kotlin {
-    jvmToolchain(21)
+    jvmToolchain(libs.versions.jvmToolchain.get().toInt())
 }
 
 dependencies {
@@ -29,13 +29,13 @@ dependencies {
     implementation(compose.material3)
     implementation(compose.materialIconsExtended)
     implementation(compose.components.resources)
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-swing:1.10.1")
+    implementation(libs.kotlin.coroutines.swing)
 
     @OptIn(ExperimentalComposeLibrary::class)
     testImplementation(compose.uiTest)
     testImplementation(compose.desktop.uiTestJUnit4)
     testImplementation(kotlin("test"))
-    testImplementation("org.assertj:assertj-core:3.27.2")
+    testImplementation(libs.assertj.core)
 }
 
 compose.desktop {
