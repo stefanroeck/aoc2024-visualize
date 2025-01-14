@@ -1,5 +1,6 @@
 package day16.composables
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +28,14 @@ fun ShowMovementSwitch(
                 },
                 modifier = Modifier.scale(0.67f)
             )
-            Text("Show Movement")
+            Text(
+                "Show Movement",
+                modifier = Modifier.clickable(
+                    interactionSource = null,
+                    indication = null,
+                    enabled = true,
+                    onClick = { selectedOptionChange(!selectedOption) })
+            )
         }
     }
 
