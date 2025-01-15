@@ -50,7 +50,7 @@ fun MazeApplication(
                     onChangeMazeRenderingOptions = { new -> mazeRenderingOptions.value = new },
                     onStart = {
                         mazeRenderingOptions.value.run {
-                            mazeHolder.value = lifeCycle.load(MazeLoaderSpec(mazeResource))
+                            mazeHolder.value = lifeCycle.load(MazeLoaderSpec(mazeResource, solutionStrategy))
                         }
                     }
                 )

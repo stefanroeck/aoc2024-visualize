@@ -58,6 +58,32 @@ class MazeApplicationTest {
         }
     }
 
+    @OptIn(ExperimentalTestApi::class)
+    @Test
+    fun `solve large maze`() {
+        runTest {
+            composeTestRule.setContent {
+                MazeApplication(DpSize(10.dp, 10.dp))
+            }
+            composeTestRule.onNodeWithText("Large 1").performClick()
+            composeTestRule.onNodeWithText("Show Movement").performClick()
+            composeTestRule.onNodeWithText("Start").performClick()
+            composeTestRule.onNodeWithText("Start").performClick()
+            composeTestRule.waitUntilExactlyOneExists(hasText("Finished", substring = true))
+            composeTestRule.onNodeWithText("Found solutions: 146", substring = true).assertExists()
+            composeTestRule.onNodeWithText("Cheapest solution: 130 536", substring = true).assertExists()
+            composeTestRule.onNodeWithText("Steps: 1 238 945", substring = true).assertExists()
+
+            composeTestRule.onAllNodesWithTag("mazeTile")
+                .filter(hasMazeTileState(MazeTileState.ShortestSolution))
+                .assertCountEquals(535)
+            composeTestRule.onAllNodesWithTag("mazeTile")
+                .filter(hasMazeTileState(MazeTileState.OtherSolutions))
+                .assertCountEquals(2272)
+        }
+    }
+
+
     private fun hasMazeTileState(state: MazeTileState) =
         SemanticsMatcher("has state $state") {
             it.config[SemanticPropertyKeys.MazeTile.State].contains(state)
