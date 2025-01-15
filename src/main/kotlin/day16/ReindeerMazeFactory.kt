@@ -41,7 +41,9 @@ object ReindeerMazeFactory {
         mazeEvents.eventInvoker = broker
     }
 
-    private suspend fun loadMaze(filePath: String) =
-        ReindeerMaze(InputUtils.parseLines(FileUtil.readComposeResource(filePath)))
+    private suspend fun loadMaze(filePath: String): ReindeerMaze {
+        val lines = InputUtils.parseLines(FileUtil.readComposeResource(filePath))
+        return ReindeerMaze(lines, DirectionStrategies.LowestCost)
+    }
 
 }

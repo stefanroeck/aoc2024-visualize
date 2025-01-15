@@ -65,7 +65,31 @@ private class CheckForKnownTotalCosts(private val maximumCosts: Long) : PathOpti
 
 private data class PathThroughMaze(val path: List<Point>, val costs: Long)
 
-class ReindeerMaze(private val lines: List<String>) {
+typealias Costs = Int
+
+interface DirectionStrategy {
+    fun sortPossibleDirections(
+        candidates: List<Triple<Direction, Point, Costs>>,
+        currentDirection: Direction
+    ): List<Triple<Direction, Point, Costs>>
+}
+
+private class LowestCostDirectionStrategy : DirectionStrategy {
+    override fun sortPossibleDirections(
+        candidates: List<Triple<Direction, Point, Costs>>,
+        currentDirection: Direction
+    ): List<Triple<Direction, Point, Costs>> {
+        return candidates.sortedBy { it.third }
+    }
+}
+
+enum class DirectionStrategies(val fn: DirectionStrategy) {
+    LowestCost(LowestCostDirectionStrategy())
+}
+
+class ReindeerMaze(private val lines: List<String>, strategy: DirectionStrategies) {
+
+    private val directionStrategy = strategy.fn
 
     val maze: Maze by lazy {
         Maze(lines)
@@ -166,32 +190,29 @@ class ReindeerMaze(private val lines: List<String>) {
             return // dead end
         }
 
-        // traverse same direction first as way cheaper than turning
-        val lowCostDirection = possibleDirections.firstOrNull { it.first == direction }?.let {
-            move(
-                it.second,
-                direction,
-                pathOptimizationStrategy,
-                costs + 1,
-                steps,
-                solvedPathsCosts,
-                path + it.second
-            )
-            it
-        }
-
-        possibleDirections
-            .filter { it != lowCostDirection }
-            .forEach {
-                move(
-                    it.second,
+        val sortedDirections =
+            directionStrategy.sortPossibleDirections(possibleDirections.map<Pair<Direction, Point>, Triple<Direction, Point, Int>> {
+                Triple(
                     it.first,
+                    it.second,
+                    costs(direction, it.first)
+                )
+            }, direction)
+
+        sortedDirections
+            .forEach { (direction, point, newCosts) ->
+                move(
+                    point,
+                    direction,
                     pathOptimizationStrategy,
-                    costs + 1000 + 1,
+                    costs + newCosts,
                     steps,
                     solvedPathsCosts,
-                    path + it.second
+                    path + point
                 )
             }
     }
+
+    private fun costs(currentDirection: Direction, newDirection: Direction) =
+        if (currentDirection == newDirection) 1 else 1001 // 1001: one for turning, +1 for step
 }
