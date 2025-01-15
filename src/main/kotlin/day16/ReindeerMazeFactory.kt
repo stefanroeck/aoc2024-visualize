@@ -16,9 +16,10 @@ import java.time.Duration
 
 object ReindeerMazeFactory {
 
-    fun createReindeerMaze(mazeResource: String): ReindeerMaze {
+    fun createReindeerMaze(mazeResource: String, solutionStrategy: SolutionStrategy): ReindeerMaze {
         return runBlocking {
-            loadMaze(mazeResource)
+            val lines = InputUtils.parseLines(FileUtil.readComposeResource(mazeResource))
+            ReindeerMaze(lines, solutionStrategy)
         }
     }
 
@@ -39,11 +40,6 @@ object ReindeerMazeFactory {
         )
 
         mazeEvents.eventInvoker = broker
-    }
-
-    private suspend fun loadMaze(filePath: String): ReindeerMaze {
-        val lines = InputUtils.parseLines(FileUtil.readComposeResource(filePath))
-        return ReindeerMaze(lines, DirectionStrategies.LowestCost)
     }
 
 }

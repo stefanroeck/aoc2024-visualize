@@ -53,7 +53,6 @@ private class CombinedOptimizationStrategy(private val delegates: List<PathOptim
         }
         return false
     }
-
 }
 
 private class CheckForKnownTotalCosts(private val maximumCosts: Long) : PathOptimizationStrategy {
@@ -62,32 +61,9 @@ private class CheckForKnownTotalCosts(private val maximumCosts: Long) : PathOpti
     }
 }
 
-
 private data class PathThroughMaze(val path: List<Point>, val costs: Long)
 
-typealias Costs = Int
-
-interface DirectionStrategy {
-    fun sortPossibleDirections(
-        candidates: List<Triple<Direction, Point, Costs>>,
-        currentDirection: Direction
-    ): List<Triple<Direction, Point, Costs>>
-}
-
-private class LowestCostDirectionStrategy : DirectionStrategy {
-    override fun sortPossibleDirections(
-        candidates: List<Triple<Direction, Point, Costs>>,
-        currentDirection: Direction
-    ): List<Triple<Direction, Point, Costs>> {
-        return candidates.sortedBy { it.third }
-    }
-}
-
-enum class DirectionStrategies(val fn: DirectionStrategy) {
-    LowestCost(LowestCostDirectionStrategy())
-}
-
-class ReindeerMaze(private val lines: List<String>, strategy: DirectionStrategies) {
+class ReindeerMaze(private val lines: List<String>, strategy: SolutionStrategy) {
 
     private val directionStrategy = strategy.fn
 
@@ -197,7 +173,7 @@ class ReindeerMaze(private val lines: List<String>, strategy: DirectionStrategie
                     it.second,
                     costs(direction, it.first)
                 )
-            }, direction)
+            }, direction, maze.endPosition)
 
         sortedDirections
             .forEach { (direction, point, newCosts) ->

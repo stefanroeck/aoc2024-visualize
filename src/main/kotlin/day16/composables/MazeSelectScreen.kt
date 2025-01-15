@@ -13,20 +13,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import day16.SolutionStrategy
 
 @Composable
 fun MazeSelectScreen(
-    mazeRenderingOptions: MazeRenderingOptions?,
+    mazeRenderingOptions: MazeRenderingOptions,
     onChangeMazeRenderingOptions: (MazeRenderingOptions) -> Unit,
     onStart: () -> Unit,
 ) {
-    val mazeOptionsOrDefault = mazeRenderingOptions ?: MazeRenderingOptions(
-        buttonOptions[0].resourceLocationOnClasspath,
-        true,
-        speedButtonOptions[0].delay,
-    )
-    val selectedMaze = buttonOptions.first { it.resourceLocationOnClasspath == mazeOptionsOrDefault.mazeResource }
-    val selectedSpeedOption = speedButtonOptions.first { it.delay == mazeOptionsOrDefault.visualizationDelay }
+    val selectedMaze = buttonOptions.first { it.resourceLocationOnClasspath == mazeRenderingOptions.mazeResource }
+    val selectedSpeedOption = speedButtonOptions.first { it.delay == mazeRenderingOptions.visualizationDelay }
+    val solutionStrategyOption = mazeRenderingOptions.solutionStrategy
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(
@@ -34,15 +31,19 @@ fun MazeSelectScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             MazeSelectorButton(selectedOption = selectedMaze) { new ->
-                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(mazeResource = new.resourceLocationOnClasspath))
+                onChangeMazeRenderingOptions(mazeRenderingOptions.copy(mazeResource = new.resourceLocationOnClasspath))
             }
 
             SpeedSelectorButton(selectedOption = selectedSpeedOption) { new ->
-                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(visualizationDelay = new.delay))
+                onChangeMazeRenderingOptions(mazeRenderingOptions.copy(visualizationDelay = new.delay))
             }
 
-            ShowMovementSwitch(selectedOption = mazeOptionsOrDefault.showMovements) { new ->
-                onChangeMazeRenderingOptions(mazeOptionsOrDefault.copy(showMovements = new))
+            SolutionStrategySelectorButton(selectedOption = solutionStrategyOption) { new ->
+                onChangeMazeRenderingOptions(mazeRenderingOptions.copy(solutionStrategy = new))
+            }
+
+            ShowMovementSwitch(selectedOption = mazeRenderingOptions.showMovements) { new ->
+                onChangeMazeRenderingOptions(mazeRenderingOptions.copy(showMovements = new))
             }
 
             ExtendedFloatingActionButton(
@@ -55,7 +56,17 @@ fun MazeSelectScreen(
 
 }
 
-data class MazeRenderingOptions(val mazeResource: String, val showMovements: Boolean, val visualizationDelay: Long)
+data class MazeRenderingOptions(
+    val mazeResource: String,
+    val showMovements: Boolean,
+    val visualizationDelay: Long,
+    val solutionStrategy: SolutionStrategy
+)
 
 val defaultMazeRenderingOptions =
-    MazeRenderingOptions(buttonOptions[0].resourceLocationOnClasspath, true, speedButtonOptions[0].delay)
+    MazeRenderingOptions(
+        buttonOptions[0].resourceLocationOnClasspath,
+        true,
+        speedButtonOptions[0].delay,
+        SolutionStrategy.LowestCost
+    )

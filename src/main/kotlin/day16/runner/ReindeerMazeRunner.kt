@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import day16.ReindeerMaze
 import day16.ReindeerMazeFactory
+import day16.SolutionStrategy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -13,7 +14,7 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.launch
 import util.Maze
 
-data class MazeLoaderSpec(val mazeResource: String)
+data class MazeLoaderSpec(val mazeResource: String, val solutionStrategy: SolutionStrategy)
 data class MazeRunnerSpec(val showMovements: Boolean, val visualizationDelay: Long)
 
 interface ReindeerMazeLifeCycle {
@@ -27,7 +28,7 @@ private class ReindeerMazeLifeCycleImpl : ReindeerMazeLifeCycle {
     private var runningMazeJob: Job? = null
 
     override fun load(spec: MazeLoaderSpec): Maze {
-        reindeerMaze = ReindeerMazeFactory.createReindeerMaze(spec.mazeResource)
+        reindeerMaze = ReindeerMazeFactory.createReindeerMaze(spec.mazeResource, spec.solutionStrategy)
         return reindeerMaze!!.maze
     }
 
