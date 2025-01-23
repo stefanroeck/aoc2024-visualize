@@ -133,7 +133,14 @@ class ReindeerMaze(private val lines: List<String>, strategy: SolutionStrategy) 
         solvedPathsCosts: MutableList<PathThroughMaze>,
         path: List<Point>
     ) {
-        maze.onEvent(MazeEvent.Movement(position = position, costs = costs, steps = steps.toLong()))
+        maze.onEvent(
+            MazeEvent.Movement(
+                position = position,
+                direction = direction,
+                costs = costs,
+                steps = steps.toLong()
+            )
+        )
         steps.incrementAndGet()
 
         if (maze.events.doCancel) {
