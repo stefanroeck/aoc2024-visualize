@@ -6,8 +6,11 @@ import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ArrowCircleDown
+import androidx.compose.material.icons.outlined.ArrowCircleLeft
+import androidx.compose.material.icons.outlined.ArrowCircleRight
+import androidx.compose.material.icons.outlined.ArrowCircleUp
 import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.RunCircle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -17,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import util.MapOfThings.Direction
 import util.Maze
 import util.MazeEvent
 import util.MazeEventSink
@@ -49,6 +53,7 @@ fun ApplicationTopBarComposable(
     var foundSolutions by remember { mutableStateOf(0L) }
     var cheapestSolution by remember { mutableStateOf<Long?>(null) }
     var state by remember { mutableStateOf(State.None) }
+    var direction by remember { mutableStateOf(Direction.Right) }
 
     val eventSink = remember {
         object : MazeEventSink {
@@ -68,6 +73,7 @@ fun ApplicationTopBarComposable(
                     is MazeEvent.Movement -> {
                         currentCosts = event.costs
                         totalSteps = event.steps
+                        direction = event.direction
                     }
 
                     is MazeEvent.Finish -> {
@@ -101,10 +107,20 @@ fun ApplicationTopBarComposable(
                 "Steps: ${formatLong(totalSteps)}"
     }
 
+    val directionIcon = when (direction) {
+        Direction.Left -> Icons.Outlined.ArrowCircleLeft
+        Direction.Right -> Icons.Outlined.ArrowCircleRight
+        Direction.Up -> Icons.Outlined.ArrowCircleUp
+        Direction.Down -> Icons.Outlined.ArrowCircleDown
+        else -> {
+            null
+        }
+    }
+
     TopAppBar(
         title = {
-            if (state == State.Running) {
-                Icon(Icons.Outlined.RunCircle, "Pending")
+            if (state == State.Running && directionIcon != null) {
+                Icon(directionIcon, "Pending")
             } else if (state == State.Finished) {
                 Icon(Icons.Outlined.Done, "Done")
             }
