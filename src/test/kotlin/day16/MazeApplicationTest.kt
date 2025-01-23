@@ -66,20 +66,22 @@ class MazeApplicationTest {
                 MazeApplication(DpSize(10.dp, 10.dp))
             }
             composeTestRule.onNodeWithText("Large 1").performClick()
+            composeTestRule.onNodeWithText("Fastest").performClick()
             composeTestRule.onNodeWithText("Show Movement").performClick()
+            composeTestRule.onNodeWithText("Hand on left Wall").performClick()
             composeTestRule.onNodeWithText("Start").performClick()
             composeTestRule.onNodeWithText("Start").performClick()
             composeTestRule.waitUntilExactlyOneExists(hasText("Finished", substring = true))
-            composeTestRule.onNodeWithText("Found solutions: 146", substring = true).assertExists()
+            composeTestRule.onNodeWithText("Found solutions: 101", substring = true).assertExists()
             composeTestRule.onNodeWithText("Cheapest solution: 130 536", substring = true).assertExists()
-            composeTestRule.onNodeWithText("Steps: 1 238 945", substring = true).assertExists()
+            composeTestRule.onNodeWithText("Steps: 789 696", substring = true).assertExists()
 
             composeTestRule.onAllNodesWithTag("mazeTile")
                 .filter(hasMazeTileState(MazeTileState.ShortestSolution))
-                .assertCountEquals(535)
+                .assertCountEquals(538)
             composeTestRule.onAllNodesWithTag("mazeTile")
                 .filter(hasMazeTileState(MazeTileState.OtherSolutions))
-                .assertCountEquals(2272)
+                .assertCountEquals(984)
         }
     }
 
