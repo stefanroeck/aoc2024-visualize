@@ -1,6 +1,6 @@
 [versions]
 assertj = "3.27.3"
-compose = "1.7.0"
+compose = "1.8.10+dev2394"
 coroutines = "1.10.2"
 jvmToolchain = "21"
 kotlin = "2.1.20"
