@@ -1,5 +1,5 @@
 [versions]
-assertj = "3.27.4"
+assertj = "3.27.7"
 compose = "1.7.0"
 coroutines = "1.10.2"
 jvmToolchain = "21"
